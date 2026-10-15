@@ -106,7 +106,7 @@ describe('POST /api/traduire', () => {
     expect(json).toEqual({ erreur: expect.stringContaining('Le scribe a renversé son encrier') })
   })
 
-  it('sans secret Turnstile, hors développement : 500, sans appeler l’IA', async () => {
+  it('sans secret Turnstile : 500, sans appeler l’IA', async () => {
     vi.spyOn(console, 'error').mockImplementation(() => {})
     const { statut, env } = await envoyer(demande, { TURNSTILE_SECRET_KEY: undefined })
     expect(statut).toBe(500)

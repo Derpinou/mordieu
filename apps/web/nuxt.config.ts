@@ -1,11 +1,5 @@
 import { LONGUEUR_MAX } from '@mordieu/core'
 
-// Clé de site Turnstile du widget de production : publique, elle finit dans la page prérendue
-// (mise en route : README). En développement, on prend la clé de test officielle de Cloudflare,
-// dont le widget passe toujours sans rien demander.
-const CLE_SITE_TURNSTILE = ''
-const CLE_SITE_TURNSTILE_TEST = '1x00000000000000000000AA'
-
 export default defineNuxtConfig({
   compatibilityDate: '2026-10-15',
   modules: ['@nuxt/fonts'],
@@ -30,10 +24,9 @@ export default defineNuxtConfig({
   appConfig: { longueurMax: LONGUEUR_MAX },
 
   runtimeConfig: {
-    public: { turnstileSiteKey: CLE_SITE_TURNSTILE },
-  },
-  $development: {
-    runtimeConfig: { public: { turnstileSiteKey: CLE_SITE_TURNSTILE_TEST } },
+    // Clé de site Turnstile, publique : NUXT_PUBLIC_TURNSTILE_SITE_KEY, lue au build (variable de
+    // build de Workers Builds) et inscrite dans la page prérendue. Le script `dev` fournit celle de test.
+    public: { turnstileSiteKey: '' },
   },
 
   // La page est servie telle quelle par les fichiers statiques du Worker : seul /api/traduire l'exécute.
