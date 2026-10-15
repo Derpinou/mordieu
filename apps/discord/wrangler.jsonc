@@ -1,0 +1,12 @@
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "mordieu-discord",
+  "main": "src/index.ts",
+  "compatibility_date": "2026-10-01",
+  "observability": { "enabled": true },
+  "ai": { "binding": "AI", "remote": true },
+  "vars": {
+    // Clé publique de l'application (Developer Portal > General Information > Public Key).
+    "DISCORD_PUBLIC_KEY": ""
+  }
+}

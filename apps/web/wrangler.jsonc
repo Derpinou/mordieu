@@ -1,0 +1,19 @@
+// Lu par `nuxt dev` pour émuler les bindings, et complété au build par Nitro (point d'entrée,
+// fichiers statiques, nodejs_compat) dans .output/server/wrangler.json, que `wrangler deploy` utilise.
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "mordieu",
+  "compatibility_date": "2026-10-01",
+  "observability": { "enabled": true },
+  "ai": { "binding": "AI", "remote": true },
+  "ratelimits": [
+    {
+      "name": "LIMITEUR",
+      // Identifiant libre, propre au compte : deux Workers qui ont le même partagent leurs compteurs.
+      "namespace_id": "1001",
+      // Par adresse IP : 10 traductions par minute, largement assez pour un humain.
+      "simple": { "limit": 10, "period": 60 }
+    }
+  ]
+  // Secret à ajouter avant le premier déploiement (voir README) : TURNSTILE_SECRET_KEY.
+}

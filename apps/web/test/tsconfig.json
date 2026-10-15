@@ -1,0 +1,10 @@
+{
+  // Les tests importent la route : mêmes réglages que le code serveur, plus les types Node.
+  "extends": "../.nuxt/tsconfig.server.json",
+  "compilerOptions": {
+    "types": ["node"],
+    // Avec les autres, dans .nuxt (ignoré par git) : `nuxt typecheck` construit les projets (`tsc -b`).
+    "tsBuildInfoFile": "../.nuxt/tsconfig.test.tsbuildinfo"
+  },
+  "include": ["../.nuxt/types/nitro-nuxt.d.ts", "../.nuxt/types/nitro.d.ts", "./**/*"]
+}
