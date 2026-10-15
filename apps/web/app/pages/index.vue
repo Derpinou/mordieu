@@ -11,10 +11,13 @@ class ErreurScribe extends Error {}
 
 const ENCRIER_RENVERSE = 'Diantre ! Le scribe a renversé son encrier… Réessaie dans un instant.'
 
+// Les balises Open Graph restent : Discord s'en sert quand il ne peut pas montrer l'aperçu en composants.
 useSeoMeta({
+  ogType: 'website',
   ogTitle: 'Mordieu : traducteur en vieux françois',
   ogDescription: 'Traduis ton français de tous les jours en faux vieux françois, avecques jurons et tournures d’antan.',
 })
+useHead({ script: [{ id: 'discord:component-embed', type: 'application/json', textContent: embedDiscord }] })
 
 const { longueurMax } = useAppConfig()
 const texte = ref('')
@@ -25,7 +28,8 @@ const enCours = ref(false)
 const annonce = ref('')
 const restant = computed(() => longueurMax - texte.value.length)
 
-const { prendreJeton, interactif } = useTurnstile(useTemplateRef('guet'))
+const guet = useTemplateRef('guet')
+const { avecJeton, interactif } = useTurnstile(guet)
 
 function soumettre() {
   const aTraduire = texte.value.trim()
@@ -42,11 +46,16 @@ function autreVersion() {
 
 async function traduire(aTraduire: string) {
   if (enCours.value) return
+  if (interactif.value) {
+    // Le guet attend sa case cochée. « Autre version » est plus bas : il peut être hors de vue.
+    guet.value?.scrollIntoView({ block: 'center' })
+    return
+  }
   enCours.value = true
   erreur.value = ''
   annonce.value = 'Le scribe trempe sa plume…'
   try {
-    const reponse = await demander({ texte: aTraduire, jeton: await prendreJeton() })
+    const reponse = await avecJeton((jeton) => demander({ texte: aTraduire, jeton }))
     resultat.value = { original: aTraduire, ...reponse }
     annonce.value = `En vieux françois : ${reponse.traduction}`
   } catch (e) {
@@ -88,61 +97,56 @@ function choisir(index: number) {
 </script>
 
 <template>
-  <div>
-    <main class="parchemin">
-      <header class="entete">
-        <h1 class="titre">Mordieu</h1>
-        <p class="devise">Translateur de françois moderne en vieux françois</p>
-      </header>
+  <main class="parchemin">
+    <header class="entete">
+      <h1 class="titre">Mordieu</h1>
+      <p class="devise">Translateur de françois moderne en vieux françois</p>
+    </header>
 
-      <p class="intro lettrine">
-        Oyez, oyez ! Écris ta phrase en français d’aujourd’hui : le scribe la mettra en vieux françois de taverne,
-        avecques jurons et tournures d’antan.
-      </p>
+    <p class="intro lettrine">
+      Oyez, oyez ! Écris ta phrase en français d’aujourd’hui : le scribe la mettra en vieux françois de taverne,
+      avecques jurons et tournures d’antan.
+    </p>
 
-      <div class="filet" aria-hidden="true">❦</div>
+    <div class="filet" aria-hidden="true">❦</div>
 
-      <form class="formulaire" @submit.prevent="soumettre">
-        <label for="texte" class="etiquette">Ton texte</label>
-        <textarea
-          id="texte"
-          v-model="texte"
-          name="texte"
-          rows="4"
-          :maxlength="longueurMax"
-          required
-          autocomplete="off"
-          placeholder="Mon frère, on va tout casser !"
-          aria-describedby="compteur"
-          @keydown.enter.ctrl.prevent="soumettre"
-          @keydown.enter.meta.prevent="soumettre"
-        />
-        <p id="compteur" class="compteur" :class="{ presque: restant < 50 }">
-          {{ restant }} {{ restant > 1 ? 'caractères restants' : 'caractère restant' }}
-        </p>
-        <div ref="guet" />
-        <p v-if="interactif" class="aide-guet">Le guet veut s’assurer que tu n’es point un automate : coche sa case.</p>
-        <button type="submit" class="bouton bouton-sceau" :aria-disabled="enCours">
-          {{ enCours ? 'Le scribe écrit…' : 'Traduire' }}
-        </button>
-      </form>
-
-      <p class="sr-only" role="status">{{ annonce }}</p>
-      <ScribeAuTravail v-if="enCours" />
-      <p v-if="erreur" class="erreur" role="alert">{{ erreur }}</p>
-      <CarteTraduction
-        v-if="resultat"
-        v-bind="resultat"
-        :en-cours="enCours"
-        @autre="autreVersion"
-        @choisir="choisir"
+    <form class="formulaire" @submit.prevent="soumettre">
+      <label for="texte" class="etiquette">Ton texte</label>
+      <textarea
+        id="texte"
+        v-model="texte"
+        name="texte"
+        rows="4"
+        :maxlength="longueurMax"
+        required
+        autocomplete="off"
+        placeholder="Mon frère, on va tout casser !"
+        aria-describedby="compteur"
+        @keydown.enter.ctrl.prevent="soumettre"
+        @keydown.enter.meta.prevent="soumettre"
       />
-    </main>
+      <p id="compteur" class="compteur" :class="{ presque: restant < 50 }">
+        {{ restant }} {{ restant > 1 ? 'caractères restants' : 'caractère restant' }}
+      </p>
+      <!-- Le guet ne se montre que pendant qu'il attend sa case cochée, quoi qu'en décide Turnstile. -->
+      <div v-show="interactif" ref="guet" />
+      <p v-if="interactif" class="aide-guet">Le guet veut s’assurer que tu n’es point un automate : coche sa case.</p>
+      <button type="submit" class="bouton bouton-sceau" :aria-disabled="enCours || interactif">
+        {{ enCours ? 'Le scribe écrit…' : 'Traduire' }}
+      </button>
+    </form>
 
-    <footer class="pied">
-      <p>Traductions par Workers AI, chez Cloudflare. Ton texte ne sert qu’à la traduction : le site n’en garde rien.</p>
-    </footer>
-  </div>
+    <p class="sr-only" role="status">{{ annonce }}</p>
+    <ScribeAuTravail v-if="enCours" />
+    <p v-if="erreur" class="erreur" role="alert">{{ erreur }}</p>
+    <CarteTraduction
+      v-if="resultat"
+      v-bind="resultat"
+      :en-cours="enCours"
+      @autre="autreVersion"
+      @choisir="choisir"
+    />
+  </main>
 </template>
 
 <style scoped>
@@ -230,14 +234,5 @@ textarea::placeholder {
   color: var(--rubrique-sombre);
   background: rgb(143 29 20 / 0.08);
   border-left: 4px solid var(--rubrique);
-}
-
-.pied {
-  width: min(100% - 2rem, 44rem);
-  margin: 0 auto;
-  padding: 0.5rem 0 2rem;
-  font-size: 0.95rem;
-  text-align: center;
-  color: rgb(242 227 196 / 0.8);
 }
 </style>

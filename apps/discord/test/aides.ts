@@ -27,10 +27,16 @@ export async function requeteSignee(interaction: unknown, cle = cles.privateKey)
   })
 }
 
+/** Ce que workers-ai-provider envoie au binding, pour les vérifications des tests. */
+interface EntreesIA {
+  messages: { role: string; content: string }[]
+  max_tokens?: number
+}
+
 /** Faux binding Workers AI : renvoie `contenu` au format chat completions, ou lève l'erreur donnée. */
 export function fausseIA(contenu: string | Error) {
   return {
-    run: vi.fn(async () => {
+    run: vi.fn(async (_modele: string, _entrees: EntreesIA) => {
       if (contenu instanceof Error) throw contenu
       return {
         choices: [{ message: { content: contenu }, finish_reason: 'stop' }],

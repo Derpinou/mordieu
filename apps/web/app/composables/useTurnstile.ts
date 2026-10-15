@@ -1,8 +1,9 @@
 import type { ShallowRef } from 'vue'
 
 // Le guet : le widget Turnstile de Cloudflare, qui délivre les jetons que /api/traduire vérifie.
-// Un jeton ne sert qu'une fois : on en redemande un dès qu'on a pris le précédent, pour que le
-// suivant soit prêt avant le prochain clic.
+// Un jeton ne sert qu'une fois : on en redemande un dès que la requête qui a pris le précédent est
+// revenue, pour que le suivant soit prêt avant le prochain clic. Pas avant : s'il fallait cocher la
+// case, elle surgirait pendant que le scribe écrit.
 
 interface Turnstile {
   render(conteneur: HTMLElement, options: Record<string, unknown>): string | null | undefined
@@ -78,7 +79,6 @@ export function useTurnstile(conteneur: Readonly<ShallowRef<HTMLElement | null>>
             if (attente) {
               attente.resoudre(nouveau)
               attente = undefined
-              renouveler()
             } else {
               jeton = nouveau
             }
@@ -120,13 +120,12 @@ export function useTurnstile(conteneur: Readonly<ShallowRef<HTMLElement | null>>
     if (widget) window.turnstile?.reset(widget)
   }
 
-  /** Un jeton neuf pour la prochaine demande ; attend le widget s'il n'en a pas encore. */
+  /** Un jeton neuf ; attend le widget s'il n'en a pas encore. */
   function prendreJeton(): Promise<string> {
     if (panne) return Promise.reject(panne)
     if (jeton) {
       const pris = jeton
       jeton = undefined
-      renouveler()
       return Promise.resolve(pris)
     }
     attente?.rejeter(new ErreurGuet('Demande remplacée'))
@@ -135,5 +134,15 @@ export function useTurnstile(conteneur: Readonly<ShallowRef<HTMLElement | null>>
     })
   }
 
-  return { prendreJeton, interactif }
+  /** Fait `demande` avec un jeton neuf, puis en redemande un au widget une fois qu'elle a abouti. */
+  async function avecJeton<T>(demande: (jeton: string) => Promise<T>): Promise<T> {
+    const pris = await prendreJeton()
+    try {
+      return await demande(pris)
+    } finally {
+      renouveler()
+    }
+  }
+
+  return { avecJeton, interactif }
 }

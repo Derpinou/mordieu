@@ -9,7 +9,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import bot from '../src/index.ts'
 import { autresCles, clePublique, fausseIA, fauxContexte, requeteSignee } from './aides.ts'
 
-const reponseIA = JSON.stringify({ traduction: 'Mille grasces', variantes: ['Grand mercy, messire'] })
+const reponseIA = JSON.stringify({ traduction: 'Mille grasces' })
 
 const commun = { application_id: 'id-app', token: 'jeton-interaction' }
 const slash = (texte: string, discret?: boolean) => ({
@@ -81,9 +81,16 @@ describe('bot Discord', () => {
     expect(url).toBe('https://discord.com/api/v10/webhooks/id-app/jeton-interaction/messages/@original')
     expect(init.method).toBe('PATCH')
     expect(JSON.parse(init.body as string)).toEqual({
-      content: '> Merci beaucoup\n**Mille grasces**\n-# Grand mercy, messire',
+      content: 'Mille grasces',
       allowed_mentions: { parse: [] },
     })
+  })
+
+  it('ne demande pas de variantes au modèle : le message n’en montre pas', async () => {
+    const { ia } = await envoyer(slash('Merci beaucoup'))
+    const [, { messages, max_tokens }] = ia.run.mock.calls[0]!
+    expect(messages.find((message) => message.role === 'system')?.content).not.toContain('"variantes"')
+    expect(max_tokens).toBeLessThan(1000)
   })
 
   it('/mordieu discret : la réponse n’est visible que de son auteur', async () => {
@@ -96,7 +103,7 @@ describe('bot Discord', () => {
 
   it('menu contextuel : traduit le message visé', async () => {
     await envoyer(menu('Merci beaucoup'))
-    expect(JSON.parse(appelsDiscord[0]![1].body as string).content).toContain('**Mille grasces**')
+    expect(JSON.parse(appelsDiscord[0]![1].body as string).content).toBe('Mille grasces')
   })
 
   it('message sans texte ou trop long : prévient tout de suite, sans appeler l’IA', async () => {

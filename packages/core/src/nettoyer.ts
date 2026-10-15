@@ -16,8 +16,8 @@ export function nettoyerPhrase(phrase: string): string {
   return propre
 }
 
-/** Nettoie la sortie du modèle et ne garde que des variantes distinctes (3 au plus). */
-export function nettoyer({ traduction, variantes }: Traductions): Traductions {
+/** Nettoie la sortie du modèle et ne garde que des variantes distinctes (3 au plus, aucune si elle n'en a pas). */
+export function nettoyer({ traduction, variantes = [] }: { traduction: string; variantes?: string[] }): Traductions {
   const principale = nettoyerPhrase(traduction)
   const dejaVues = new Set([principale.toLowerCase()])
   const distinctes: string[] = []

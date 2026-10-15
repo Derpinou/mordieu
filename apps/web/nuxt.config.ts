@@ -29,8 +29,12 @@ export default defineNuxtConfig({
     public: { turnstileSiteKey: '' },
   },
 
-  // La page est servie telle quelle par les fichiers statiques du Worker : seul /api/traduire l'exécute.
-  routeRules: { '/': { prerender: true } },
+  // Les pages sont servies telles quelles par les fichiers statiques du Worker : seul /api/traduire l'exécute.
+  routeRules: {
+    '/': { prerender: true },
+    '/mentions-legales': { prerender: true },
+    '/confidentialite': { prerender: true },
+  },
 
   nitro: {
     preset: 'cloudflare_module',

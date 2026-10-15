@@ -1,6 +1,6 @@
 // Compare les modèles candidats sur eval/phrases.ts et écrit un rapport dans eval/resultats/.
 // Passe par ton `wrangler login` : chaque appel consomme du quota Workers AI.
-// Usage : pnpm eval [--modeles mistral-small,gemma-4] [--phrases 3]
+// Usage : pnpm eval [--modeles mistral-small,gemma-4] [--phrases 3] [--sans-variantes]
 import { mkdirSync, writeFileSync } from 'node:fs'
 import { fileURLToPath } from 'node:url'
 import { parseArgs } from 'node:util'
@@ -29,12 +29,16 @@ interface Essai {
   erreur?: string
 }
 
-const { values } = parseArgs({ options: { modeles: { type: 'string' }, phrases: { type: 'string' } } })
+const { values } = parseArgs({
+  options: { modeles: { type: 'string' }, phrases: { type: 'string' }, 'sans-variantes': { type: 'boolean' } },
+})
 const demandes = values.modeles?.split(',') ?? Object.keys(MODELES)
 const inconnus = demandes.filter((nom) => !(nom in MODELES))
 if (inconnus.length) throw new Error(`Modèles inconnus : ${inconnus.join(', ')}`)
 const noms = demandes as NomModele[]
 const corpus = values.phrases ? phrases.slice(0, Number(values.phrases)) : phrases
+// --sans-variantes : le mode du bot Discord, qui ne publie que la traduction principale.
+const variantes = !values['sans-variantes']
 
 const { env, dispose } = await getPlatformProxy<{ AI: Parameters<typeof modeleWorkersAI>[0] }>({
   configPath: fileURLToPath(new URL('wrangler.jsonc', import.meta.url)),
@@ -43,7 +47,7 @@ const { env, dispose } = await getPlatformProxy<{ AI: Parameters<typeof modeleWo
 async function essayer(nom: NomModele, phrase: Phrase): Promise<Essai> {
   const debut = performance.now()
   try {
-    const resultat = await traduire(modeleWorkersAI(env.AI, nom), phrase.texte)
+    const resultat = await traduire(modeleWorkersAI(env.AI, nom), phrase.texte, { variantes })
     return { phrase, resultat, duree: performance.now() - debut }
   } catch (erreur) {
     return { phrase, erreur: erreur instanceof Error ? erreur.message : String(erreur), duree: performance.now() - debut }
@@ -84,7 +88,7 @@ function alertes({ phrase, resultat, erreur }: Essai): string[] {
     if (phrase.texte.includes(signe) && !resultat.traduction.includes(signe)) liste.push(`« ${signe} » perdu`)
   }
   if (resultat.traduction.length > 3 * phrase.texte.length + 80) liste.push('longueur suspecte')
-  if (resultat.variantes.length < 2) liste.push(`${resultat.variantes.length} variante(s)`)
+  if (variantes && resultat.variantes.length < 2) liste.push(`${resultat.variantes.length} variante(s)`)
   return liste
 }
 
@@ -120,7 +124,7 @@ const synthese = [
 const lignes = [
   `# Comparaison des modèles, ${horodatage}`,
   '',
-  `${corpus.length} phrases × ${noms.length} modèles. Coûts estimés d'après la grille Workers AI (${nombre(NEURONS_GRATUITS_PAR_JOUR)} neurons gratuits par jour).`,
+  `${corpus.length} phrases × ${noms.length} modèles${variantes ? '' : ', sans variantes'}. Coûts estimés d'après la grille Workers AI (${nombre(NEURONS_GRATUITS_PAR_JOUR)} neurons gratuits par jour).`,
   '',
   '## Synthèse',
   '',
