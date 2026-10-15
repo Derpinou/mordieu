@@ -1,0 +1,209 @@
+/* Le parchemin : couleurs, polices, texture et lettrine, sans aucune image à télécharger. */
+
+:root {
+  /* Un parchemin reste clair : on ne suit pas le mode sombre du système. */
+  color-scheme: light;
+
+  --encre: #2a1b0d;
+  --encre-douce: #5a4126;
+  --rubrique: #8f1d14;
+  --rubrique-sombre: #6b140e;
+  --or: #c9a24a;
+  --or-clair: #ecd28a;
+  --azur: #1f3a6e;
+  --parchemin: #f2e3c4;
+  --cuir: #3a2614;
+  --velin: #fbf3e0;
+
+  --font-titre: 'Grenze Gotisch', 'Times New Roman', serif;
+  --font-texte: 'EB Garamond', Garamond, 'Times New Roman', serif;
+  --font-vieux: 'IM Fell English', 'EB Garamond', Garamond, serif;
+}
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html {
+  -webkit-text-size-adjust: 100%;
+  text-size-adjust: 100%;
+}
+
+body {
+  margin: 0;
+  min-height: 100vh;
+  min-height: 100dvh;
+  font-family: var(--font-texte);
+  font-size: 1.15rem;
+  line-height: 1.55;
+  color: var(--encre);
+  /* La table de travail du scribe : du cuir sombre, éclairé par la chandelle. */
+  background-color: var(--cuir);
+  background-image:
+    radial-gradient(ellipse 120% 70% at 50% 0%, rgb(255 190 110 / 0.16), transparent 70%),
+    radial-gradient(ellipse at 50% 120%, rgb(0 0 0 / 0.45), transparent 60%);
+  background-attachment: fixed;
+}
+
+/* La feuille : grain obtenu par un bruit SVG de quelques octets, taches et bords roussis en dégradés. */
+.parchemin {
+  position: relative;
+  width: min(100% - 1rem, 44rem);
+  margin: 0.5rem auto;
+  padding: 1.75rem 1.25rem 2rem;
+  background-color: var(--parchemin);
+  background-image:
+    radial-gradient(ellipse at 22% 12%, rgb(255 251 238 / 0.7), transparent 55%),
+    radial-gradient(circle at 84% 22%, rgb(150 100 45 / 0.12) 0 2.5rem, transparent 4.5rem),
+    radial-gradient(ellipse at 12% 88%, rgb(150 100 45 / 0.14), transparent 40%),
+    radial-gradient(ellipse at 50% 50%, transparent 58%, rgb(120 75 25 / 0.28) 100%),
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='220' height='220'%3E%3Cfilter id='g'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.8' numOctaves='3' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 .38 0 0 0 0 .25 0 0 0 0 .1 0 0 0 .55 0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23g)'/%3E%3C/svg%3E");
+  border-radius: 3px 7px 4px 9px / 8px 4px 9px 3px;
+  box-shadow:
+    inset 0 0 2.25rem rgb(110 70 25 / 0.32),
+    inset 0 0 0.35rem rgb(90 55 20 / 0.45),
+    0 0.75rem 2.5rem rgb(0 0 0 / 0.5);
+}
+
+@media (min-width: 40rem) {
+  .parchemin {
+    margin-block: 2.5rem;
+    padding: 3rem 3.25rem 3.25rem;
+  }
+}
+
+.titre {
+  margin: 0;
+  font-family: var(--font-titre);
+  font-size: clamp(3.25rem, 16vw, 5.25rem);
+  font-weight: 600;
+  line-height: 1;
+  text-align: center;
+  color: var(--rubrique);
+  text-shadow: 0 1px 0 rgb(255 255 255 / 0.45);
+}
+
+/* Lettrine enluminée : lettre d'or sur champ d'azur semé de points blancs, cadre d'or.
+   ::first-letter garde le texte intact pour les lecteurs d'écran. */
+.lettrine::first-letter {
+  float: left;
+  margin: 0.05em 0.1em 0 0;
+  padding: 0.15em 0.12em 0.03em;
+  font-family: var(--font-titre);
+  /* Haute d'environ trois lignes de texte. */
+  font-size: 4.3em;
+  font-weight: 600;
+  line-height: 0.82;
+  color: var(--or-clair);
+  text-shadow:
+    0.03em 0.03em 0 var(--rubrique-sombre),
+    0 0 0.15em rgb(0 0 0 / 0.35);
+  background-color: var(--azur);
+  background-image:
+    radial-gradient(circle, rgb(255 255 255 / 0.4) 0.035em, transparent 0.045em),
+    linear-gradient(135deg, #2c4f92, var(--azur) 55%, #13274d);
+  background-size:
+    0.3em 0.3em,
+    100% 100%;
+  border: 0.08em double var(--or);
+  border-radius: 0.04em;
+}
+
+.filet {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  margin: 1.5rem 0;
+  color: var(--rubrique);
+  font-size: 1.3rem;
+  line-height: 1;
+}
+
+.filet::before,
+.filet::after {
+  content: '';
+  flex: 1;
+  border-top: 1px solid currentColor;
+  border-bottom: 1px solid currentColor;
+  height: 3px;
+  opacity: 0.55;
+}
+
+.bouton {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  min-height: 2.75rem;
+  padding: 0.5rem 1.1rem;
+  font: inherit;
+  font-weight: 600;
+  line-height: 1.2;
+  color: var(--encre);
+  background: rgb(255 250 235 / 0.35);
+  border: 2px solid var(--encre-douce);
+  border-radius: 0.35rem;
+  cursor: pointer;
+  transition:
+    background-color 0.15s,
+    transform 0.1s;
+}
+
+.bouton:hover {
+  background-color: rgb(90 65 38 / 0.12);
+}
+
+.bouton:active {
+  transform: translateY(1px);
+}
+
+.bouton:disabled,
+.bouton[aria-disabled='true'] {
+  cursor: progress;
+  opacity: 0.6;
+}
+
+/* Le bouton principal, rouge comme la cire d'un sceau. */
+.bouton-sceau {
+  font-size: 1.25rem;
+  letter-spacing: 0.02em;
+  color: var(--velin);
+  background: radial-gradient(circle at 35% 30%, #b3362b, var(--rubrique) 55%, var(--rubrique-sombre));
+  border-color: var(--rubrique-sombre);
+  box-shadow:
+    inset 0 0 0 2px rgb(255 215 190 / 0.25),
+    0 2px 0 rgb(60 10 5 / 0.6);
+}
+
+.bouton-sceau:hover {
+  background: radial-gradient(circle at 35% 30%, #c2402f, #9c2318 55%, var(--rubrique-sombre));
+}
+
+:focus-visible {
+  outline: 3px solid var(--azur);
+  outline-offset: 3px;
+}
+
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: -1px;
+  padding: 0;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+  border: 0;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}

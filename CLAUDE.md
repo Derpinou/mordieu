@@ -16,7 +16,10 @@ Workspace pnpm : `apps/*` et `packages/*`.
 - `apps/discord` (`@mordieu/discord`) : Worker qui sert d'endpoint d'interactions Discord. Mise en route côté Discord : `apps/discord/README.md`.
   - `src/index.ts` : vérification de la signature, routage, réponse différée ; `src/commandes.ts` : définition des commandes ; `src/discord.ts` : format du message et appel à l'API Discord.
   - `scripts/enregistrer-commandes.ts` : envoie les commandes à Discord (jeton du bot dans `apps/discord/.env`).
-- `apps/web` *(phase 3)* : Nuxt 4 sur Workers (preset `cloudflare_module`).
+- `apps/web` (`@mordieu/web`) : site Nuxt 4 sur Workers (preset `cloudflare_module`). Mise en route (Turnstile, déploiement) : `apps/web/README.md`.
+  - `app/` : la page (`pages/index.vue`, `components/CarteTraduction.vue`), le widget Turnstile (`composables/useTurnstile.ts`), l'image à télécharger dessinée dans un canvas (`utils/image.ts`), le style parchemin (`assets/css/parchemin.css`).
+  - `server/api/traduire.post.ts` : la seule route ; `server/utils/turnstile.ts` : vérification des jetons. `shared/api.ts` : le contrat entre les deux.
+  - `wrangler.jsonc` : bindings (`AI`, `LIMITEUR`), lus par `nuxt dev` et recopiés au build dans `.output/server/wrangler.json`.
 
 ## Commandes
 
@@ -25,6 +28,7 @@ Workspace pnpm : `apps/*` et `packages/*`.
 - `pnpm --filter @mordieu/core regles` : régénère le prompt depuis `regles.md`
 - `pnpm --filter @mordieu/core eval [--modeles gemma-4,llama-3.3-70b] [--phrases 3]` : compare les modèles en vrai. Passe par le `wrangler login` de l'utilisateur et **consomme du quota Workers AI** (≈ 4 000 neurons pour tout le corpus) : ne pas le lancer sans raison.
 - `pnpm --filter @mordieu/discord deploy` : déploie le bot. `pnpm --filter @mordieu/discord commandes` : met à jour ses commandes chez Discord. Les deux agissent sur les comptes de l'utilisateur : à lui de les lancer.
+- `pnpm --filter @mordieu/web dev` : le site sur http://localhost:3000, avec la vraie IA (≈ 15 neurons par traduction : en faire peu). `pnpm --filter @mordieu/web build`, puis `pnpm --filter @mordieu/web exec wrangler deploy --dry-run` : vérifie le bundle Workers sans rien envoyer. `pnpm --filter @mordieu/web deploy` : à l'utilisateur de le lancer.
 
 ## Conventions
 
@@ -34,6 +38,7 @@ Workspace pnpm : `apps/*` et `packages/*`.
 - Une dépendance utilisée par plusieurs paquets a sa version dans le `catalog` de `pnpm-workspace.yaml` et se déclare avec `"catalog:"`.
 - pnpm 11 refuse les scripts d'installation non listés dans `allowBuilds`, et les versions publiées depuis moins d'un jour (`minimumReleaseAge`) : viser une version plus ancienne plutôt que garder les `minimumReleaseAgeExclude` qu'il ajoute tout seul.
 - TypeScript reste en 6.x : `vue-tsc` (Nuxt) ne fonctionne pas encore avec TypeScript 7.
+- Dans `apps/web`, `nuxt typecheck` vérifie les projets générés par Nuxt (`.nuxt/tsconfig.*.json`) et les tests (`test/tsconfig.json`, réglages du serveur plus types Node). Le code de `server/` importe explicitement (`h3`, chemins relatifs) plutôt que par les auto-imports de Nitro : les tests montent la route sur une app h3 nue. Côté `app/`, les auto-imports de Nuxt restent la règle.
 - Le vocabulaire du domaine est en français : `traduire`, `variantes`, `regles`…
 
 ## Décisions techniques
@@ -46,13 +51,17 @@ Workspace pnpm : `apps/*` et `packages/*`.
 - **Le texte de l'utilisateur est à traduire, jamais à exécuter** : il est placé entre balises `<texte>`, et le prompt l'impose avec un exemple.
 - **Discord** : endpoint HTTP, sans connexion Gateway. La première réponse doit partir en moins de 3 s : on répond en différé (type 5), puis on édite le message depuis `ctx.waitUntil()`, qui s'arrête 30 s après la réponse ; la traduction est donc abandonnée au bout de 25 s pour avoir le temps de prévenir. Textes vides ou trop longs : refus immédiat, en message éphémère.
 - **Configuration du bot minimale** : seule `DISCORD_PUBLIC_KEY` (publique) est dans `wrangler.jsonc` ; l'identifiant d'application vient de l'interaction signée. Le jeton du bot ne sert qu'au script des commandes et ne va jamais dans le Worker. Mentions désactivées (`allowed_mentions`) puisqu'on cite le texte des autres. Scope `applications.commands` seulement, installation sur serveur et par utilisateur.
-- **Pas de `nodejs_compat`** : le bot tourne sans (vérifié dans `wrangler dev`).
-- **Site** : page prérendue + `POST /api/traduire`, protégé par Turnstile et le binding Rate Limiting.
+- **Pas de `nodejs_compat` pour le bot** : il tourne sans (vérifié dans `wrangler dev`). Le site, lui, l'active (`nitro.cloudflare.nodeCompat`, le défaut de Nitro avec `deployConfig`) : Nitro s'appuie sur des API Node, autant les avoir natives que polyfillées dans le bundle.
+- **Site** : page prérendue, servie par les fichiers statiques du Worker, et une seule route, `POST /api/traduire`. Elle vérifie, du moins cher au plus cher, le compteur par IP (binding Rate Limiting, 10 par minute), le jeton Turnstile, puis appelle le moteur. Ses erreurs renvoient `{ erreur }`, un message dans le ton que la page montre tel quel.
+- **Turnstile** : clé de site publique dans `nuxt.config.ts` (inscrite dans la page au build), clé secrète dans le secret `TURNSTILE_SECRET_KEY` du Worker. En dev, les clés de test officielles de Cloudflare (`$development` pour la clé de site, `import.meta.dev` dans la route pour la secrète) : rien à configurer. Un jeton ne sert qu'une fois : la page en redemande un dès qu'elle a pris le précédent.
+- **Bindings en dev** : `nuxt dev` les obtient de wrangler (`getPlatformProxy`), par un proxy qui ne sait pas transmettre d'`AbortSignal` à `env.AI.run()`. La route ne fixe donc son délai (20 s) qu'en production.
+- **La page n'importe pas `@mordieu/core`** : zod y entrerait avec (≈ 30 Ko gzip). `LONGUEUR_MAX` lui parvient par `appConfig`, fixé au build dans `nuxt.config.ts`.
+- **Image à télécharger** : dessinée dans un canvas côté client (parchemin, lettrine, texte), sans bibliothèque de capture du DOM.
 
 ## Feuille de route
 
 0. Fondations : fait
 1. Moteur `packages/core` : fait
 2. Bot Discord : code fait (`/mordieu`, menu contextuel « Traduire en vieux françois ») ; mise en ligne côté Discord à faire par l'utilisateur
-3. Site Nuxt
+3. Site Nuxt : code fait ; mise en ligne à faire par l'utilisateur (widget Turnstile, clé de site, secret, déploiement)
 4. CI avec Workers Builds, puis bonus (permaliens, AI Gateway, images)
