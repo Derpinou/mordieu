@@ -1,0 +1,30 @@
+# Dépendances
+node_modules/
+
+# Builds
+dist/
+.output/
+.nuxt/
+.nitro/
+.data/
+
+# Cloudflare
+.wrangler/
+.dev.vars*
+!.dev.vars.example
+
+# Environnement
+.env
+.env.*
+!.env.example
+
+# Divers
+.DS_Store
+*.log
+coverage/
+
+# IDE
+.claude
+.vscode
+.idea/
+.cursor
