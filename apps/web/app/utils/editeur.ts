@@ -3,5 +3,5 @@
 /** Pseudonyme de l'éditeur, qui garde l'anonymat permis aux éditeurs non professionnels (LCEN, art. 1-1, II). */
 export const EDITEUR = 'Derpinou'
 
-/** Le seul moyen de contact, demandes sur les données personnelles comprises. */
+/** Le seul moyen de contact, demandes sur les données personnelles comprises ; le pied de page invite aussi à le rejoindre. */
 export const SERVEUR_DISCORD = 'https://discord.com/invite/ahjFrbk2Nr'

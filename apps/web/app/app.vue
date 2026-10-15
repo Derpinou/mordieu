@@ -6,7 +6,8 @@
       Traductions générées par une IA, Workers AI de Cloudflare. Ton texte ne sert qu’à la traduction : le site n’en
       garde rien.
     </p>
-    <nav aria-label="Informations légales" class="liens">
+    <nav aria-label="Liens" class="liens">
+      <a :href="SERVEUR_DISCORD" rel="noopener">Rejoindre le serveur Discord</a>
       <NuxtLink to="/mentions-legales">Mentions légales</NuxtLink>
       <NuxtLink to="/confidentialite">Confidentialité</NuxtLink>
     </nav>
