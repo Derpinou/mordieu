@@ -82,8 +82,12 @@ function lireDemande(interaction: APIApplicationCommandInteraction): { texte: st
 async function traduireEtPublier({ application_id, token }: APIInteraction, texte: string, env: Env): Promise<void> {
   let contenu: string
   try {
-    const traduction = await traduire(modeleWorkersAI(env.AI), texte, { abortSignal: AbortSignal.timeout(DELAI_MAX) })
-    contenu = formaterTraduction(texte, traduction)
+    // Le message ne montre que la traduction principale : inutile de faire écrire des variantes au modèle.
+    const traduction = await traduire(modeleWorkersAI(env.AI), texte, {
+      variantes: false,
+      abortSignal: AbortSignal.timeout(DELAI_MAX),
+    })
+    contenu = formaterTraduction(traduction)
   } catch (erreur) {
     console.error('Échec de la traduction', erreur)
     contenu = 'Diantre ! Le scribe a renversé son encrier… Réessaie dans un instant.'

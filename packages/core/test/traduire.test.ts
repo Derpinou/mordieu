@@ -1,5 +1,6 @@
 import { MockLanguageModelV4 } from 'ai/test'
 import { describe, expect, it } from 'vitest'
+import { promptSysteme } from '../src/prompt.ts'
 import { LONGUEUR_MAX, TexteInvalide, traduire } from '../src/traduire.ts'
 
 /** Faux modèle qui renvoie ces réponses, une par appel. */
@@ -33,10 +34,37 @@ describe('traduire', () => {
     expect(JSON.stringify(modele.doGenerateCalls[0]?.prompt)).toContain('<texte>Bonjour</texte>')
   })
 
+  it('demande des variantes par défaut', async () => {
+    const modele = modeleQuiRepond(json('Salutations'))
+    await traduire(modele, 'Bonjour')
+    expect(modele.doGenerateCalls[0]?.prompt[0]).toMatchObject({ role: 'system', content: promptSysteme(true) })
+  })
+
   it('relève la limite de tokens (256 par défaut sur Workers AI)', async () => {
     const modele = modeleQuiRepond(json('Salutations'))
     await traduire(modele, 'Bonjour')
     expect(modele.doGenerateCalls[0]?.maxOutputTokens).toBeGreaterThan(1000)
+  })
+
+  it('sans variantes : ne les demande pas, avec une limite de tokens plus basse', async () => {
+    const modele = modeleQuiRepond(JSON.stringify({ traduction: '« Mille grasces »' }))
+    const resultat = await traduire(modele, 'Merci beaucoup', { variantes: false })
+    expect(resultat).toMatchObject({ traduction: 'Mille grasces', variantes: [] })
+    const appel = modele.doGenerateCalls[0]
+    expect(appel?.prompt[0]).toMatchObject({ role: 'system', content: promptSysteme(false) })
+    expect(appel?.maxOutputTokens).toBeGreaterThan(256)
+    expect(appel?.maxOutputTokens).toBeLessThan(1000)
+  })
+
+  it('sans variantes : écarte celles que le modèle ajoute quand même', async () => {
+    const modele = modeleQuiRepond(json('Mille grasces', ['Grand merci, messire']))
+    expect((await traduire(modele, 'Merci beaucoup', { variantes: false })).variantes).toEqual([])
+  })
+
+  it('accepte une réponse sans variantes, sans relancer', async () => {
+    const modele = modeleQuiRepond(JSON.stringify({ traduction: 'Mille grasces' }))
+    expect(await traduire(modele, 'Merci beaucoup')).toMatchObject({ traduction: 'Mille grasces', variantes: [] })
+    expect(modele.doGenerateCalls).toHaveLength(1)
   })
 
   it('retrouve le JSON dans une réponse bavarde', async () => {

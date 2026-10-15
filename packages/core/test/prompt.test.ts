@@ -9,7 +9,19 @@ describe('prompt', () => {
   })
 
   it('part des règles du style', () => {
-    expect(promptSysteme.startsWith(regles)).toBe(true)
+    expect(promptSysteme(true).startsWith(regles)).toBe(true)
+    expect(promptSysteme(false).startsWith(regles)).toBe(true)
+  })
+
+  it('selon les variantes, ne change que la dernière consigne, celle du format', () => {
+    const avec = promptSysteme(true)
+    const sans = promptSysteme(false)
+    const commun = avec.slice(0, avec.lastIndexOf('\n- ') + 1)
+    expect(sans.startsWith(commun)).toBe(true)
+    expect(sans.slice(commun.length).trimEnd()).not.toContain('\n')
+    expect(avec).toContain('{"traduction": "…", "variantes": [')
+    expect(sans).toContain('{"traduction": "…"}')
+    expect(sans).not.toContain('"variantes"')
   })
 
   it('met le texte entre balises', () => {

@@ -3,8 +3,10 @@
 Nuxt 4 sur Cloudflare Workers (preset Nitro `cloudflare_module`). La page est prérendue et servie par les fichiers statiques du Worker ; seule la route `POST /api/traduire` l'exécute.
 
 - `app/` : la page (parchemin, lettrine, carte du résultat) ; `composables/useTurnstile.ts`, le widget anti-robots ; `utils/image.ts`, l'image téléchargeable, dessinée dans un canvas.
+- `app/pages/mentions-legales.vue` et `app/pages/confidentialite.vue` : les pages légales (LCEN, RGPD), liées depuis le pied de page (`app.vue`). L'éditeur et son contact sont dans `app/utils/editeur.ts`. Elles décrivent ce que le site et le bot font des données : à relire dès que ça change (nouveau service, cookie, journal, durée de conservation), et changer leur date de mise à jour.
 - `server/api/traduire.post.ts` : la route. Dans l'ordre : compteur par adresse IP (binding Rate Limiting), jeton Turnstile, puis le moteur.
 - `shared/api.ts` : ce que la page envoie et ce que la route renvoie.
+- `app/utils/embedDiscord.ts` : l'aperçu des liens du site sur Discord, en composants, inscrit dans le `<head>` de la page. Après un déploiement, l'[Embed Debugger](https://discord.com/developers/embeds) de Discord montre ce qu'il en fait.
 
 ## Développement
 
