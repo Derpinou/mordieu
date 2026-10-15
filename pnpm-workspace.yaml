@@ -1,0 +1,8 @@
+packages:
+  - apps/*
+  - packages/*
+
+# Versions partagées entre paquets : chaque paquet les déclare avec "catalog:".
+catalog:
+  # 6.x et pas 7 : vue-tsc (Nuxt) a besoin de l'API JS de TypeScript, absente de la 7.0.
+  typescript: ^6.0.3

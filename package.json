@@ -1,0 +1,9 @@
+{
+  "name": "mordieu",
+  "private": true,
+  "type": "module",
+  "packageManager": "pnpm@11.20.0",
+  "scripts": {
+    "typecheck": "pnpm -r run typecheck"
+  }
+}
