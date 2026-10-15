@@ -46,4 +46,4 @@ On peut garder des mots modernes, de l'argot ou des emprunts (ex. « Bismillah �
 Pour chaque phrase donnée :
 1. La **traduction principale**.
 2. **2 ou 3 variantes**, avec des jurons et des tournures différents.
-3. Rien d'autre, sauf si je demande des explications.
+3. Rien d'autre : jamais d'explication ni de commentaire.

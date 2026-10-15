@@ -6,3 +6,10 @@ packages:
 catalog:
   # 6.x et pas 7 : vue-tsc (Nuxt) a besoin de l'API JS de TypeScript, absente de la 7.0.
   typescript: ^6.0.3
+  vitest: ^5.0.4
+  wrangler: ^4.151.0
+
+# Scripts d'installation autorisés (pnpm 11 refuse les autres).
+allowBuilds:
+  esbuild: true
+  workerd: true
