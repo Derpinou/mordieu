@@ -5,8 +5,10 @@
   "compatibility_date": "2026-10-01",
   "observability": { "enabled": true },
   "ai": { "binding": "AI", "remote": true },
-  "vars": {
+  // Secrets du Worker (wrangler secret put), jamais dans ce fichier : `wrangler deploy` échoue tant
+  // qu'il en manque un. En local, `wrangler dev` les lit dans .env.
+  "secrets": {
     // Clé publique de l'application (Developer Portal > General Information > Public Key).
-    "DISCORD_PUBLIC_KEY": ""
+    "required": ["DISCORD_PUBLIC_KEY"]
   }
 }

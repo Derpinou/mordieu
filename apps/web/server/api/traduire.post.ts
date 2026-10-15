@@ -2,7 +2,7 @@
 import { type BindingAI, modeleWorkersAI, TexteInvalide, traduire } from '@mordieu/core'
 import { defineEventHandler, getRequestHeader, getRequestIP, type H3Event, readBody, setResponseStatus } from 'h3'
 import type { DemandeTraduction, ReponseErreur, ReponseTraduction } from '../../shared/api.ts'
-import { CLE_SECRETE_TEST, jetonValide } from '../utils/turnstile.ts'
+import { jetonValide } from '../utils/turnstile.ts'
 
 /** Le binding Rate Limiting de Workers. */
 interface Limiteur {
@@ -13,7 +13,7 @@ interface Limiteur {
 export interface Env {
   AI: BindingAI
   LIMITEUR: Limiteur
-  /** Absent en développement : la clé de test de Cloudflare le remplace. */
+  /** Secret du Worker, déclaré requis dans wrangler.jsonc ; en dev, la clé de test (script `dev`). */
   TURNSTILE_SECRET_KEY?: string
 }
 
@@ -32,7 +32,7 @@ export default defineEventHandler(async (event): Promise<ReponseTraduction | Rep
     return refuser(event, 429, 'Holà, tout doux ! Le scribe a la main lasse : laisse-le souffler une minute.')
   }
 
-  const secret = env.TURNSTILE_SECRET_KEY ?? (import.meta.dev ? CLE_SECRETE_TEST : undefined)
+  const secret = env.TURNSTILE_SECRET_KEY
   if (!secret) {
     console.error('Secret TURNSTILE_SECRET_KEY absent : voir apps/web/README.md')
     return refuser(event, 500, "Mordieu ! Le guet n'est point à son poste. Reviens plus tard.")
