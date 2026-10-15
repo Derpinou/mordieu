@@ -8,6 +8,8 @@ catalog:
   typescript: ^6.0.3
   vitest: ^5.0.4
   wrangler: ^4.151.0
+  '@cloudflare/workers-types': ^5.20261013.1
+  '@types/node': ^24.19.2
 
 # Scripts d'installation autorisés (pnpm 11 refuse les autres).
 allowBuilds:

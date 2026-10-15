@@ -7,7 +7,7 @@ Traducteur du français moderne vers un faux vieux français, façon memes médi
 ## Structure
 
 - `packages/core` : moteur de traduction partagé. Les règles du style sont dans [`packages/core/prompt/regles.md`](packages/core/prompt/regles.md).
-- `apps/discord` : bot Discord *(à venir)*
+- `apps/discord` : bot Discord ; mise en route dans [`apps/discord/README.md`](apps/discord/README.md)
 - `apps/web` : site *(à venir)*
 
 ## Développement

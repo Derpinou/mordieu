@@ -6,6 +6,12 @@ settings:
 
 catalogs:
   default:
+    '@cloudflare/workers-types':
+      specifier: ^5.20261013.1
+      version: 5.20261014.1
+    '@types/node':
+      specifier: ^24.19.2
+      version: 24.19.2
     typescript:
       specifier: ^6.0.3
       version: 6.0.3
@@ -20,6 +26,31 @@ importers:
 
   .: {}
 
+  apps/discord:
+    dependencies:
+      '@mordieu/core':
+        specifier: workspace:*
+        version: link:../../packages/core
+      discord-api-types:
+        specifier: ^0.38.56
+        version: 0.38.56
+    devDependencies:
+      '@cloudflare/workers-types':
+        specifier: 'catalog:'
+        version: 5.20261014.1
+      '@types/node':
+        specifier: 'catalog:'
+        version: 24.19.2
+      typescript:
+        specifier: 'catalog:'
+        version: 6.0.3
+      vitest:
+        specifier: 'catalog:'
+        version: 5.0.4(@types/node@24.19.2)(vite@8.3.4(@types/node@24.19.2)(esbuild@0.28.2))
+      wrangler:
+        specifier: 'catalog:'
+        version: 4.151.0(@cloudflare/workers-types@5.20261014.1)(@types/node@24.19.2)
+
   packages/core:
     dependencies:
       ai:
@@ -33,10 +64,10 @@ importers:
         version: 4.6.7
     devDependencies:
       '@cloudflare/workers-types':
-        specifier: ^5.20261013.1
+        specifier: 'catalog:'
         version: 5.20261014.1
       '@types/node':
-        specifier: ^24.19.2
+        specifier: 'catalog:'
         version: 24.19.2
       typescript:
         specifier: 'catalog:'
@@ -628,6 +659,9 @@ packages:
   detect-libc@2.1.2:
     resolution: {integrity: sha512-Btj2BOOO83o3WyH59e8MgXsxEQVcarkUOpEYrubB0urwnN10yQ364rsiByU11nZlqWYZm05i/of7io4mzihBtQ==}
     engines: {node: '>=8'}
+
+  discord-api-types@0.38.56:
+    resolution: {integrity: sha512-Hti4RZsGvF5C7SM8rF2MDHtIm0Hyfrlk84GpEA29nj91tvVVMvX+oQSCodu10t2ZcjFGofq8TX0YyC04B2E69Q==}
 
   error-stack-parser-es@1.0.5:
     resolution: {integrity: sha512-5qucVt2XcuGMcEGgWI7i+yZpmpByQ8J1lHhcL7PwqCwu9FPP3VUXzT4ltHe5i2z9dePwEHcDVOAfSnHsOlCXRA==}
@@ -1349,6 +1383,8 @@ snapshots:
   cookie@1.1.1: {}
 
   detect-libc@2.1.2: {}
+
+  discord-api-types@0.38.56: {}
 
   error-stack-parser-es@1.0.5: {}
 

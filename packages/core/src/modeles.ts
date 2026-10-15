@@ -16,7 +16,7 @@ interface Modele {
 }
 
 /** Le binding Workers AI (`env.AI`), tel que l'attend workers-ai-provider. */
-type BindingAI = NonNullable<Parameters<typeof createWorkersAI>[0]['binding']>
+export type BindingAI =NonNullable<Parameters<typeof createWorkersAI>[0]['binding']>
 
 export type NomModele = 'mistral-small' | 'gemma-4' | 'glm-4.7-flash' | 'gpt-oss-120b' | 'llama-3.3-70b'
 

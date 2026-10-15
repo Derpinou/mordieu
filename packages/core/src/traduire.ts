@@ -24,6 +24,12 @@ export class TexteInvalide extends Error {
   override name = 'TexteInvalide'
 }
 
+export interface OptionsTraduction {
+  temperature?: number
+  /** Pour abandonner en route, par exemple au bout d'un délai (`AbortSignal.timeout()`). */
+  abortSignal?: AbortSignal
+}
+
 /**
  * Traduit `texte` en faux vieux français : une traduction principale et jusqu'à 3 variantes.
  *
@@ -31,7 +37,11 @@ export class TexteInvalide extends Error {
  * fait dérailler certains modèles (gpt-oss ne renvoie plus que des « ! »). On relance une fois
  * si la réponse est inexploitable.
  */
-export async function traduire(modele: LanguageModel, texte: string, { temperature = 0.9 } = {}): Promise<Traduction> {
+export async function traduire(
+  modele: LanguageModel,
+  texte: string,
+  { temperature = 0.9, abortSignal }: OptionsTraduction = {},
+): Promise<Traduction> {
   const aTraduire = texte.trim()
   if (!aTraduire) throw new TexteInvalide('Le texte à traduire est vide.')
   if (aTraduire.length > LONGUEUR_MAX) throw new TexteInvalide(`Le texte dépasse ${LONGUEUR_MAX} caractères.`)
@@ -43,6 +53,7 @@ export async function traduire(modele: LanguageModel, texte: string, { temperatu
       prompt: messageUtilisateur(aTraduire),
       temperature,
       maxOutputTokens: TOKENS_MAX,
+      abortSignal,
     })
     const sortie = extraireJson(text)
     if (sortie) return { ...nettoyer(sortie), usage }

@@ -13,7 +13,9 @@ Workspace pnpm : `apps/*` et `packages/*`.
 - `packages/core` (`@mordieu/core`) : moteur partagé. Il exporte directement ses sources TypeScript, sans étape de build : ce sont les apps qui bundlent.
   - `src/` : `traduire()`, prompt, nettoyage de la sortie, catalogue des modèles (`modeleWorkersAI(env.AI)`).
   - `eval/` : corpus de phrases et script qui compare les modèles ; rapports dans `eval/resultats/`.
-- `apps/discord` *(phase 2)* : Worker qui sert d'endpoint d'interactions Discord.
+- `apps/discord` (`@mordieu/discord`) : Worker qui sert d'endpoint d'interactions Discord. Mise en route côté Discord : `apps/discord/README.md`.
+  - `src/index.ts` : vérification de la signature, routage, réponse différée ; `src/commandes.ts` : définition des commandes ; `src/discord.ts` : format du message et appel à l'API Discord.
+  - `scripts/enregistrer-commandes.ts` : envoie les commandes à Discord (jeton du bot dans `apps/discord/.env`).
 - `apps/web` *(phase 3)* : Nuxt 4 sur Workers (preset `cloudflare_module`).
 
 ## Commandes
@@ -22,6 +24,7 @@ Workspace pnpm : `apps/*` et `packages/*`.
 - `pnpm typecheck` et `pnpm test` : tous les paquets
 - `pnpm --filter @mordieu/core regles` : régénère le prompt depuis `regles.md`
 - `pnpm --filter @mordieu/core eval [--modeles gemma-4,llama-3.3-70b] [--phrases 3]` : compare les modèles en vrai. Passe par le `wrangler login` de l'utilisateur et **consomme du quota Workers AI** (≈ 4 000 neurons pour tout le corpus) : ne pas le lancer sans raison.
+- `pnpm --filter @mordieu/discord deploy` : déploie le bot. `pnpm --filter @mordieu/discord commandes` : met à jour ses commandes chez Discord. Les deux agissent sur les comptes de l'utilisateur : à lui de les lancer.
 
 ## Conventions
 
@@ -41,13 +44,15 @@ Workspace pnpm : `apps/*` et `packages/*`.
 - **`maxOutputTokens` toujours explicite** : Workers AI coupe à 256 tokens par défaut.
 - **Raisonnement coupé** sur les modèles qui en ont : `chat_template_kwargs.enable_thinking: false` (sur GLM, `reasoning_effort: null` ne suffit pas).
 - **Le texte de l'utilisateur est à traduire, jamais à exécuter** : il est placé entre balises `<texte>`, et le prompt l'impose avec un exemple.
-- **Discord** : endpoint HTTP, sans connexion Gateway. La première réponse doit partir en moins de 3 s : on répond en différé (type 5), puis on édite le message depuis `ctx.waitUntil()` (30 s max).
+- **Discord** : endpoint HTTP, sans connexion Gateway. La première réponse doit partir en moins de 3 s : on répond en différé (type 5), puis on édite le message depuis `ctx.waitUntil()`, qui s'arrête 30 s après la réponse ; la traduction est donc abandonnée au bout de 25 s pour avoir le temps de prévenir. Textes vides ou trop longs : refus immédiat, en message éphémère.
+- **Configuration du bot minimale** : seule `DISCORD_PUBLIC_KEY` (publique) est dans `wrangler.jsonc` ; l'identifiant d'application vient de l'interaction signée. Le jeton du bot ne sert qu'au script des commandes et ne va jamais dans le Worker. Mentions désactivées (`allowed_mentions`) puisqu'on cite le texte des autres. Scope `applications.commands` seulement, installation sur serveur et par utilisateur.
+- **Pas de `nodejs_compat`** : le bot tourne sans (vérifié dans `wrangler dev`).
 - **Site** : page prérendue + `POST /api/traduire`, protégé par Turnstile et le binding Rate Limiting.
 
 ## Feuille de route
 
 0. Fondations : fait
 1. Moteur `packages/core` : fait
-2. Bot Discord : `/mordieu` et menu contextuel « Traduire en vieux françois »
+2. Bot Discord : code fait (`/mordieu`, menu contextuel « Traduire en vieux françois ») ; mise en ligne côté Discord à faire par l'utilisateur
 3. Site Nuxt
 4. CI avec Workers Builds, puis bonus (permaliens, AI Gateway, images)
