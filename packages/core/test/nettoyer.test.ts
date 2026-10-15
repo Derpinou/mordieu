@@ -37,6 +37,10 @@ describe('nettoyer', () => {
     expect(sortie).toEqual({ traduction: 'Mille grasces', variantes: ['Grand merci, messire'] })
   })
 
+  it('accepte une sortie sans variantes', () => {
+    expect(nettoyer({ traduction: '« Mille grasces »' })).toEqual({ traduction: 'Mille grasces', variantes: [] })
+  })
+
   it('garde au plus 3 variantes', () => {
     expect(nettoyer({ traduction: 'a', variantes: ['b', 'c', 'd', 'e'] }).variantes).toEqual(['b', 'c', 'd'])
   })
